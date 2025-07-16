@@ -1,5 +1,5 @@
 import {PaylinkPostbackModel, PaylinkPostbackModelFromJSON} from "../models";
-import {createHash} from "crypto";
+import * as Crypto from "../lib/ExpoCrypto";
 
 export class PaylinkPostback {
 
@@ -22,13 +22,13 @@ export class PaylinkPostback {
         }
     }
 
-    static fromJson(json: any, licenceKey: string): PaylinkPostback {
+    static async fromJson(json: any, licenceKey: string): Promise<PaylinkPostback> {
 
         const data = (typeof json === 'string') ? JSON.parse(json) : json
 
         const model: PaylinkPostbackModel = PaylinkPostbackModelFromJSON(data)
 
-        const hash = createHash('sha256');
+        let base = '';
 
         const errorcode = model.errorcode;
         const i = errorcode.indexOf(".");
@@ -40,15 +40,19 @@ export class PaylinkPostback {
             ec = errorcode;
         }
 
-        hash.update(model.authcode)
-        hash.update(model.amount.toString())
-        hash.update(ec)
-        hash.update(model.merchantid.toString())
-        hash.update(model.transno.toString())
-        hash.update(model.identifier)
-        hash.update(licenceKey)
+        base += model.authcode;
+        base += model.amount.toString();
+        base += ec;
+        base += model.merchantid.toString();
+        base += model.transno.toString();
+        base += model.identifier;
+        base += licenceKey;
 
-        const calculatedSha = hash.digest('base64')
+        const calculatedSha = await Crypto.digestStringAsync(
+            Crypto.CryptoDigestAlgorithm.SHA256,
+            base,
+            { encoding: Crypto.CryptoEncoding.BASE64 }
+        );
 
         if (calculatedSha === model.sha256) {
             return new PaylinkPostback(model)

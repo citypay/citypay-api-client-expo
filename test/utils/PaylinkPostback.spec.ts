@@ -59,7 +59,7 @@ describe ("PaylinkPostback ", () => {
 
     it("should parse json object", async () => {
 
-        const postback = PaylinkPostback.fromJson(testData, licenceKey)
+        const postback = await PaylinkPostback.fromJson(testData, licenceKey)
 
         expect(postback).toBeInstanceOf(PaylinkPostback);
         expect(postback.get('nameOnCard')).toBe("N E Body");
@@ -67,7 +67,7 @@ describe ("PaylinkPostback ", () => {
     })
 
     it("should parse json string", async () => {
-        const postback = PaylinkPostback.fromJson(JSON.stringify(testData), licenceKey)
+        const postback = await PaylinkPostback.fromJson(JSON.stringify(testData), licenceKey)
 
         expect(postback).toBeInstanceOf(PaylinkPostback);
         expect(postback.get('nameOnCard')).toBe("N E Body");
@@ -78,7 +78,7 @@ describe ("PaylinkPostback ", () => {
         var incorrectData = testData;
         incorrectData.sha256 = "AAAAAANPTtloAau98b5wvTayQN0IKCeh0jTphS8qMIY="
 
-        expect(() => PaylinkPostback.fromJson(incorrectData, licenceKey))
-            .toThrow("Failed to authenticate data. SHA256 signature does not match.")
+        await expect(PaylinkPostback.fromJson(incorrectData, licenceKey))
+            .rejects.toThrow("Failed to authenticate data. SHA256 signature does not match.")
     })
 })
